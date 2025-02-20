@@ -7,14 +7,16 @@ import { fileURLToPath } from "url";
 import adminRoutes from "./routes/admin.js";
 import shopRoutes from "./routes/shop.js";
 import { errorFunction } from "./controllers/error.js";
-import sequelize from "./util/database.js";
+// import sequelize from "./util/database.js";
 import { Product } from "./models/product.js";
-import { User } from "./models/user.js";
-import { Cart} from "./models/cart.js";
-import { CartItem } from "./models/cart-item.js";
-import {Order} from "./models/order.js";
-import { orderItem } from "./models/order-item.js";
-import { constants } from "buffer";
+import {User} from "./models/user.js";
+// import { Cart} from "./models/cart.js";
+// import { CartItem } from "./models/cart-item.js";
+// import {Order} from "./models/order.js";
+// import { orderItem } from "./models/order-item.js";
+// import { constants } from "buffer";
+import {mongoConnection , getDb}from "./util/database.js";
+// import mongoose from "mongoose";
 
 const port = 3000;
 const app = express();
@@ -32,10 +34,10 @@ app.use(express.static(path.join(__dirname, "public")));
 //want to make sure that every time a request comes in (e.g., someone visiting your online shop), you can access the user easily.
 //This is done by adding a middleware function. Middleware is like a checkpoint before your request is processed.
 app.use((req, res, next) => {
-  User.findByPk(1)
+  User.findById("67b0f927ac530b63266bcb34")
     .then((user) => {
       //created user manually coz not using authentication for now
-      req.user = user; //Storeing user in requests so can use the information, like name or email, when the user create products
+      req.user = new User(user.name, user.email, user.cart, user._id); //Storeing user in requests so can use the information, like name or email, when the user create products
       next();
     }).catch((err) => {
       console.log("error fetching user", err);
@@ -47,7 +49,25 @@ app.use(shopRoutes);
 
 app.use(errorFunction);
 
-Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" }); //A user created this product
+// mongoose.connect('mongodb+srv://User1:wdXsIWzdoGSB7xdS@cluster0.qalpb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0').then((result => {
+//   app.listen(port, () => {
+//     console.log(`Server is running on ${port}`);
+//   }
+//   );
+// })).catch((err) => {
+//   console.log("error connecting to mongodb", err);    
+// });
+
+mongoConnection( () => {
+  app.listen(port, () => {
+    console.log(`Server is running on ${port}`);
+  });  
+})
+
+
+
+
+/*Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" }); //A user created this product
 User.hasMany(Product); //A user has many products
 User.hasOne(Cart); //A user can have one cart
 Cart.belongsTo(User); //reverse relation which is optional, A cart belomgs to a user
@@ -83,4 +103,6 @@ sequelize
   }))
   .catch((err) => {
     console.log("Error in creating table", err);
-  });
+  });*/
+
+

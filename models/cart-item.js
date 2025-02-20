@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+/*import { Sequelize } from "sequelize";
 import sequelize from '../util/database.js';
 
 export const CartItem = sequelize.define('cartItem', {
@@ -11,4 +11,4 @@ export const CartItem = sequelize.define('cartItem', {
   quantity: {
     type: Sequelize.INTEGER,
   }
-});
+}); */

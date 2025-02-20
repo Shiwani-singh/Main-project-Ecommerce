@@ -88,7 +88,7 @@ export class Cart {
 */
 
 // Working with sequelize
-import { Sequelize } from "sequelize";
+/*import { Sequelize } from "sequelize";
 import sequelize from '../util/database.js';
 
 export const Cart = sequelize.define('cart', {
@@ -98,4 +98,5 @@ export const Cart = sequelize.define('cart', {
     autoIncrement: true,
     primaryKey: true
   }
-});
+});*/
+

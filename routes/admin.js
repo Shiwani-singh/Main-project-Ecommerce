@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 import {getAddProduct, postAddProduct, getProducts, getEditProduct, postEditProduct, postDeleteProduct} from '../controllers/admin.js';
 
+
 const router = express.Router();
 
 const __filename = fileURLToPath(import.meta.url);

@@ -1,4 +1,7 @@
+import mongodb from "mongodb";
 import { Product } from "../models/product.js";
+
+const objectId = mongodb.ObjectId;
 
 export const getAddProduct = (req, res, next) => {
   res.render("admin/edit-product", {
@@ -13,15 +16,19 @@ export const postAddProduct = (req, res) => {
   const imageUrl = req.body.imageUrl;
   const description = req.body.description;
   const price = req.body.price;
-  req.user.createProduct({
-    title: title,
-    imageUrl: imageUrl,
-    description: description,
-    price: price
-  })
+  const product = new Product(
+    title,
+    price,
+    imageUrl,
+    description,
+    null,
+    req.user._id
+  );
+  product
+    .save()
     .then((result) => {
-      console.log("product added succesfully to db", result);
-      res.redirect('/admin/products')
+      console.log("Product added successfully to DB", result);
+      res.redirect("/admin/products");
     })
     .catch((err) => {
       console.log("error in adding product to db", err);
@@ -30,14 +37,15 @@ export const postAddProduct = (req, res) => {
 
 export const getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
+  const prodId = req.params.productId;
   if (!editMode) {
     return res.redirect("/");
   }
-  const prodId = req.params.productId;
-  req.user.getProducts({where: {id: prodId}})
+
+  // req.user.getProducts({where: {id: prodId}}) sequelize method
   // Product.findByPk(prodId)
-    .then((products) => {
-      const product = products[0];
+  Product.fetchById(prodId)
+    .then((product) => {
       if (!product) {
         console.log("Product not found"); // Debug log
         return res.redirect("/");
@@ -45,7 +53,7 @@ export const getEditProduct = (req, res, next) => {
       res.render("admin/edit-product", {
         pageTitle: "Edit Product",
         path: "/admin/edit-product",
-        editing: true, // Indicates edit mode to the template
+        editing: true, // Indicates edit mode to the template true,
         product: product,
       });
     })
@@ -63,16 +71,17 @@ export const postEditProduct = (req, res, next) => {
     price: updatedPrice,
   } = req.body;
 
-  Product.findByPk(prodId)
-    .then((product) => {
-      product.title = updatedTitle;
-      product.imageUrl = updatedImageUrl;
-      product.description = updatedDescription;
-      product.price = updatedPrice;
-      return product.save();
-    })
+  const product = new Product(
+    updatedTitle,
+    updatedPrice,
+    updatedImageUrl,
+    updatedDescription,
+    prodId
+  );
+  product
+    .save()
     .then((result) => {
-      console.log("Product Updated");
+      console.log("Product Updated", result);
       res.redirect("/admin/products");
     })
     .catch((err) => {
@@ -81,6 +90,17 @@ export const postEditProduct = (req, res, next) => {
 };
 
 export const getProducts = (req, res, next) => {
+  Product.fetchAll()
+    .then((products) => {
+      res.render("admin/products", {
+        prods: products,
+        pageTitle: "Admin products",
+        path: "/admin/products",
+      });
+    })
+    .catch((err) => {
+      console.log("Error fetching admin products", err);
+      /*sequelize method
   req.user.getProducts()
     .then((products) => {
       res.render("admin/products", {
@@ -91,17 +111,31 @@ export const getProducts = (req, res, next) => {
     })
     .catch((err) => {
       console.log("Error fetching admin products", err);
+    });*/
     });
+  /*sequelize method
+  req.user.getProducts()
+    .then((products) => {
+      res.render("admin/products", {
+        prods: products,
+        pageTitle: "Admin products",
+        path: "/admin/products",
+      });
+    })
+    .catch((err) => {
+      console.log("Error fetching admin products", err);
+    });*/
 };
 
 export const postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByPk(prodId).then(product => {
-    return Product.destroy({ where: { id: prodId }});
-  })
-  .then(result => {
-    console.log('Product deleted');
-    res.redirect("/admin/products");
-  })
-  .catch((err) => console.log("error deleting the product", err));
+  Product.deleteById(prodId)
+    // .then((product) => { sequlize method
+    //   // return Product.destroy({ where: { id: prodId } });
+    // })
+    .then((result) => {
+      console.log("Product deleted");
+      res.redirect("/admin/products");
+    })
+    .catch((err) => console.log("error deleting the product", err));
 };
