@@ -1,5 +1,5 @@
 <%- include('../includes/header.ejs') %>
-    <link rel="stylesheet" href="/public/css/product.css">
+    <link rel="stylesheet" href="/css/order.css">
     </head>
 
     <body>
@@ -12,11 +12,11 @@
                         <ul>
                             <% orders.forEach(order => { %>
                                  <li>
-                                    <h1># Order - <%= order._id %></h1>
-                                    <ul>
-                                        <% order.items.forEach(product => { %>
-                                            <li>
-                                                <%= product.title %> (<%= product.quantity %>)
+                                    <h1># Order Id - <%= order._id %></h1>
+                                    <ul class="order__item-list">
+                                        <% order.products.forEach(p => { %>
+                                            <li class="order__item">
+                                                <%= p.product.title %> (<%= p.quantity %>)
                                             </li>
                                        <% }) %>
                                     </ul>
@@ -25,5 +25,8 @@
                            
                         </ul>
                   <%  } %>
+                  <form action="/create-order" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>"> 
+                </form>
                 
             </main>

@@ -1,0 +1,42 @@
+.login-form {
+  max-width: 450px;
+  margin: 50px auto; /* Center vertically and horizontally */
+  padding: 20px;
+  background: rgb(170, 202, 253);
+  box-shadow: 0 4px 10px rgba(45, 201, 133, 0.2);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-message{
+  margin: auto;
+  width: 90%;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ba4e4e;
+  background-color: rgb(13, 86, 107);
+  text-align: center;
+
+}
+
+.user-message--error{
+  border-color: aqua;
+  background: rgb(237, 147, 147);
+}
+
+@media (min-width: 768px) {
+  .main-header-nav{
+    display: flex;;
+  }
+
+  #side-menu-toggle {
+    display: none;
+  }
+
+  .user-message{
+    width: 30rem;
+  }
+
+}

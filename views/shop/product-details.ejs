@@ -24,8 +24,11 @@
                 <hr>
                 <div class="centered">
                     <form action="/create-order" method="post">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button class="btn" type="submit">Buy Now</button>
                     </form>
                 </div>
-                <%- include('../includes/add-to-cart.ejs') %>   
+                <% if(isAuthenticated) {%>
+                    <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+                <% } %>
             </main>

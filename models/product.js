@@ -1,3 +1,37 @@
+import mongoose from 'mongoose';
+const Schema = mongoose.Schema;
+
+const productSchema =  new Schema({
+  title:{
+    type: String,
+    required: true
+  },
+  price:{
+    type: Number,
+    required: true
+  },
+  description:{
+    type: String,
+    required: true
+  },
+  imageUrl:{
+    type: String,
+    required: true
+  },
+  userId:{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+});
+
+export default mongoose.model('Product', productSchema);
+
+
+
+
+
+
 /*import db from './util/database.js';
 import db from "../util/database.js";
 
@@ -115,7 +149,7 @@ export const Product = sequelize.define('product', {
 })  */
 
 //working with mongodb
-import mongodb from "mongodb";
+/*import mongodb from "mongodb";
 // import { ObjectId } from "mongodb"; // Import ObjectId from mongodb
 import { getDb } from "../util/database.js";
 
@@ -213,5 +247,5 @@ export class Product {
         console.log('Product Deleted');
       });
   }
-}
+}*/
 

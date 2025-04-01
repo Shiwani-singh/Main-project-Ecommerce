@@ -1,0 +1,38 @@
+<%- include ('../includes/header.ejs') %>
+
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/form.css">
+
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+        <div class="login-container">
+            <main>
+                <% if(errorMessage){%>
+                    <div class="user-message user-message--error ">
+                        <%= errorMessage %>
+                        
+                <% } %>
+                <form class="login-form" action="/signup" method="POST">
+                    <div class="form-control">
+                        <label for="email">Email</label>
+                        <input type="email" name="email" id="email" placeholder="enter email">
+                    </div>
+
+                    <div class="form-control">
+                        <label for="Password">Password</label>
+                        <input type="password" name="password" id="password" placeholder="enter Password">
+                    </div>
+
+                    <div class="form-control">
+                        <label for=" confirmPassword">Confirm Password</label>
+                        <input type="password" name="confirmPassword" id="confirmPassword" placeholder="enter confirm Password">
+                    </div>
+                    <input type="hidden" name= "_csrf"  value="<%= csrfToken %>">
+                    <button class="btn" type="submit">Signup</button>
+
+                </form>
+            </main>
+        </div>    
+            <%- include('../includes/footer.ejs') %>

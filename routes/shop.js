@@ -2,7 +2,9 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { getIndex, getProducts, getProductById, getCart, postCart, postCartDeleteItem, getOrders, postOrder} from '../controllers/shop.js';
+import {isAuth} from '../middleware/isAuth.js';
+import { getIndex, getProducts, getProductById, postCart, getCart, postCartDeleteItem, getOrders, postOrder, getTest} from '../controllers/shop.js';
+
 
 const router = express.Router();
 
@@ -10,21 +12,23 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+router.get('/test-session', getTest);
+
 router.get('/', getIndex);
 
 router.get('/products', getProducts)
 
 router.get('/products/:productId', getProductById);
 
-router.get('/cart', getCart);
+router.get('/cart', isAuth, getCart);
 
-router.post('/cart', postCart);
+router.post('/cart', isAuth, postCart);
 
-router.post('/cart-delete-item' , postCartDeleteItem);
+router.post('/cart-delete-item', isAuth, postCartDeleteItem);
 
-router.get('/orders', getOrders)
+router.get('/orders', isAuth, getOrders)
 
-router.post('/create-order' , postOrder)
+router.post('/create-order', isAuth, postOrder)
 
 
 

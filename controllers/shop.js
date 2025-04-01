@@ -1,13 +1,22 @@
 // import { path } from "express/lib/application.js";
 import path from "path";
-import { Product } from "../models/product.js";
+// import { Product } from "../models/product.js";
+import Product from "../models/product.js";
+import Order from "../models/order.js";
 // import { Cart } from "../models/cart.js";
 
+export const getTest = ((req, res) => {
+  console.log("Session in getTest:", req.session);
+  res.json(req.session);  // Return session data as JSON
+});
+
 export const getProducts = (req, res, next) => {
-  Product.fetchAll()
-    .then((product) => {
+  // Product.fetchAll() mongo method
+  Product.find()
+    .then((products) => {
+      // console.log("products fetched successfully", products);
       res.render("shop/product-list", {
-        prods: product,
+        prods: products,
         pageTitle: "All products",
         path: "/products",
       });
@@ -16,11 +25,13 @@ export const getProducts = (req, res, next) => {
       console.log("Error in fetching data", err);
     });
 };
-
+// get a single product
 export const getProductById = (req, res, next) => {
   const productId = req.params.productId;
-  Product.fetchById(productId) // ({ where: { id: productId } }) it is for sequelize
+  Product.findById(productId) // findById is a mongoose method
+    // Product.fetchById(productId) // ({ where: { id: productId } }) it is for sequelize
     .then((product) => {
+     
       // console.log(product);
       res.render("shop/product-details", {
         product: product, //product on the right side of colon is the product we are retrieving & left side is the key by which  we will be able to access it in view.
@@ -45,12 +56,12 @@ export const getProductById = (req, res, next) => {
 };
 
 export const getIndex = (req, res, next) => {
-  Product.fetchAll()
+  Product.find()
     .then((product) => {
       res.render("shop/index", {
         prods: product,
         pageTitle: "Shop",
-        path: "/",
+        path: "/"
       });
     })
     .catch((err) => {
@@ -77,18 +88,21 @@ export const getIndex = (req, res, next) => {
 // };
 
 export const getCart = (req, res, next) => {
-  console.log(req.user, "user in getCart");
+  // console.log(req.user, "user in getCart");
   if (!req.user) {
     return res.status(401).json({ message: "User not found" });
   }
 
   req.user
-    .getCart()
-    .then((products) => {
+    .populate("cart.items.productId")
+    .then((user) => {
+      // console.log(user.cart.items, "cart items");
+      const products = user.cart.items;
       res.render("shop/cart", {
         path: "/cart",
         pageTitle: "Your Cart",
         products: products,
+        
       });
     })
     .catch((err) => console.log("error getting the cart", err));
@@ -135,16 +149,18 @@ export const getCart = (req, res, next) => {
 
 //add new products to the cart
 export const postCart = (req, res, next) => {
+  console.log("from postCart", req.body);
   const prodId = req.body.productId; // productId is the name of the input field in the form
-  Product.fetchById(prodId)
+  Product.findById(prodId)
     .then((product) => {
       return req.user.addToCart(product).then((result) => {
-        console.log("product added to cart", result);
+        // console.log("product added to cart", result);
         res.redirect("/cart");
       });
     })
     .catch((err) => console.log("error fetching product in cart", err));
 };
+
 /*sequelize method
   let fetchedCart;
   let newQuantity = 1;
@@ -187,7 +203,7 @@ export const postCart = (req, res, next) => {
 export const postCartDeleteItem = (req, res, next) => {
   const prodId = req.body.productId;
   req.user
-    .deleteItemFromCart(prodId)
+    .removeFromCart(prodId)
     .then((result) => {
       res.redirect("/cart");
     })
@@ -195,18 +211,29 @@ export const postCartDeleteItem = (req, res, next) => {
 };
 
 export const getOrders = (req, res, next) => {
-  req.user
-    .getOrders()
-    .then((orders) => {
-      res.render("shop/orders", {
-        path: "/orders",
-        pageTitle: "Your Orders",
-        orders: orders,
-      }); //stores all retrived orders
-    })
-    .catch((err) => {
-      console.log("error fetching orders", err);
-    });
+  Order.find({ "user.userId" : req.user._id}) //it gives all orders that belongs to that user
+  .then((orders) => {
+    res.render("shop/orders", {
+      path: "/orders",
+      pageTitle: "Your Orders",
+      orders: orders,
+    }); //stores all retrived orders
+  })
+  .catch((err) => {
+    console.log("error fetching orders", err);
+  });
+  // req.user //mongodb method
+  //   .populate('order.items.productId')
+  //   .then((orders) => {
+  //     res.render("shop/orders", {
+  //       path: "/orders",
+  //       pageTitle: "Your Orders",
+  //       orders: orders,
+  //     }); //stores all retrived orders
+  //   })
+  //   .catch((err) => {
+  //     console.log("error fetching orders", err);
+  //   });
 };
 
 /*sequelize method
@@ -225,12 +252,38 @@ export const getOrders = (req, res, next) => {
 };*/
 
 export const postOrder = (req, res, next) => {
+  console.log("Received CSRF Token:", req.body._csrf);  // ✅ Check if token is received
+  console.log("Session ID:", req.sessionID);  // ✅ Check if session exists
+
   req.user
-    .addOrder()
-    .then((result) => {
+    .populate("cart.items.productId")
+    .then((user) => {
+      // console.log(user.cart.items, "cart items from post order");
+      const products = user.cart.items.map((i) => {
+        return { quantity: i.quantity, product: { ...i.productId._doc } };
+      });
+      const order = new Order({
+        user: {
+          email: req.user.email,
+          userId: req.user, //mongoose will pick the id from the user object
+        },
+        products: products,
+      });
+      return order.save();
+    })
+    .then((result) => {  //clear the cart after order is placed
+      return req.user.clearCart();
+    }).then(() => {
       res.redirect("/orders");
     })
     .catch((err) => console.log("error in post order func:", err));
+
+  // req.user mongodb method
+  //   .addOrder()
+  //   .then((result) => {
+  //     res.redirect("/orders");
+  //   })
+  //   .catch((err) => console.log("error in post order func:", err));
 };
 
 /*let fetchedCart;
