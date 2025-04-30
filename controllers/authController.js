@@ -16,6 +16,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import nodeMailer from "nodemailer";
 import User from "../models/user.js";
+import { validationResult } from "express-validator";
 
 const transporter = nodeMailer.createTransport({
   service: "gmail",
@@ -64,6 +65,16 @@ export const postLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email: email });
+    const errors = validationResult(req); // Check for validation errors
+
+    if(!errors.isEmpty()){
+      return res.render("auth/login", {
+        path: "/login",
+        pageTitle: "Login Page",
+        errorMessage: errors.array()[0].msg,
+      });
+    }
+    
     if (!user) {
       // console.log("Invalid email or password.");
       req.flash("error", "User did not found, Please sign up.");
@@ -124,6 +135,25 @@ export const postLogout = (req, res, next) => {
 export const getSignup = (req, res, next) => {
   let message = req.flash("error");
   // console.log("Retrieved Flash Message:", message); // Debugging
+  const oldInput = req.flash("oldInput")[0] || {
+    email: "",
+    password: "",
+    confirmPassword: "",
+  };
+
+  let validationErrors = req.flash("validationErrors");
+  if (validationErrors.length > 0) {
+    try {
+      validationErrors = JSON.parse(validationErrors[0]);
+    } catch (e) {
+      validationErrors = [];
+    }
+  } else {
+    validationErrors = [];
+  }
+
+  console.log("Validation Errors:", validationErrors); // Debugging 
+  console.log("Old Input:", oldInput); // Debugging 
 
   if (message.length > 0) {
     message = message[0];
@@ -135,12 +165,22 @@ export const getSignup = (req, res, next) => {
     path: "/signup",
     pageTitle: "Signup Page",
     errorMessage: message,
+    oldInput: oldInput,
+    validationErrors: validationErrors,
   });
 };
 
 export const postSignup = async (req, res, next) => {
   try {
     const { email, password, confirmPassword } = req.body;
+    const errors = validationResult(req); // Check for validation errors
+    if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array()); // Log all validation errors
+      req.flash("error", errors.array()[0].msg); // Get the first error message
+      req.flash("oldInput", { email, password, confirmPassword });
+      req.flash("validationErrors", JSON.stringify(errors.array()));
+      return res.status(422).redirect("/signup"); // Redirect to signup page with error message
+    }
 
     if (!password) {
       req.flash("error", "Password is required");
@@ -148,19 +188,19 @@ export const postSignup = async (req, res, next) => {
     }
 
     if (password !== confirmPassword) {
-      req.flash("error", "Passwords do not match");
+      req.flash("error", "Passwords do not match"); // Check if passwords match
       return res.redirect("/signup");
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      req.flash(
-        "error",
-        "A user with this email address already exists. Try logging in."
-      );
-      return res.redirect("/signup"); // Stop execution if user exists
-    }
+    // const existingUser = await User.findOne({ email });
+    // if (existingUser) {
+    //   req.flash(
+    //     "error",
+    //     "A user with this email address already exists. Try logging in."
+    //   );
+    //   return res.redirect("/signup"); // Stop execution if user exists
+    // }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -273,25 +313,29 @@ export const getNewPassword = async (req, res, next) => {
 };
 
 export const postNewPassword = async (req, res, next) => {
-  const {newPassword, passwordToken, userId} = req.body;
-  try{
-    const user = await User.findOne({_id: userId, resetPasswordToken: passwordToken, resetPasswordExpires: {$gt: Date.now()}});
+  const { newPassword, passwordToken, userId } = req.body;
+  try {
+    const user = await User.findOne({
+      _id: userId,
+      resetPasswordToken: passwordToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
     // console.log(user, "user found");
-    if(!user){
+    if (!user) {
       req.flash("error", "User not found or token expired.");
       return res.redirect("/login");
     }
-    const  hashedUpdatedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedUpdatedPassword = await bcrypt.hash(newPassword, 12);
     console.log(hashedUpdatedPassword, "hashedUpdatedPassword");
     user.password = hashedUpdatedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
     res.redirect("/login");
-  } catch(err){
+  } catch (err) {
     console.log(err);
   }
-}
+};
 
 // export const postSignup = (req, res, next) => {
 //   //want to store the user in the database

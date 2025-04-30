@@ -1,51 +1,70 @@
 <%- include('../includes/header.ejs') %>
     <link rel="stylesheet" href="/css/product.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <%- include('../includes/navigation.ejs') %>
+    
+    <!-- Top Banner -->
+    <div class="bg-black text-white text-center py-2">
+        For a limited time, take 20% off any new website plan. Use code at checkout: W10DSAVE20
+    </div>
 
-    </head>
+    <!-- Parallax Section -->
+    <section class="flex flex-col md:flex-row items-center justify-center min-h-screen text-white relative bg-gradient-to-r from-green-400 to-yellow-300">
+        <div class="text-center md:text-left md:w-1/2 p-8">
+            <h1 class="text-5xl md:text-6xl font-bold mb-4">A website makes it real</h1>
+            <p class="text-lg mb-6">Get your free website trial today. No credit card required.</p>
+            <a href="#products" class="shop-now bg-white text-black px-6 py-3 rounded shadow-md hover:shadow-lg">Shop Now</a>
+        </div>
+        <div class="relative md:w-1/2 p-8">
+            <img src="/images/dress.jpg" alt="Model pointing at Shop Now button" class="w-full h-auto rounded-xl shadow-lg">
+           
+        </div>
+    </section>
 
-    <body>
-        <%- include('../includes/navigation.ejs') %>
-            <main>
-                <% if (prods.length> 0) { %>
-                    <h1>My Products</h1>
-                    <p>List of all the products...</p>
+    <main id="products" class="p-4">
+        <% if (prods.length > 0) { %>
+            <h1 class="text-3xl font-bold text-green-800 text-center mb-2">My Products</h1>
+            <p class="text-center text-yellow-900 mb-6">List of all the products...</p>
 
-                    <div class="grid">
-                        <% for (let product of prods) {%>
-                            <article class="card product-item">
-                                <header class="card__header">
-                                    <h1 class="product__title">
-                                        <%= product.title %>
-                                    </h1>
-                                </header>
-                                <div class="card__image">
-                                    <img src="<%= product.imageUrl %>" alt="<%= product.title %>">
-                                </div>
-                                <div class="card__content">
-                                    <h2 class="product__price">$<%= product.price %>
-                                    </h2>
-                                    <p class="product__description">
-                                        <%= product.description %>
-                                    </p>
-                                </div>
-                                <hr>
-                                <div class="centered">
-                                    <form action="/create-order" method="post">
-                                        <input type="hidden" name= "_csrf"  value="<%= csrfToken %>">
-                                        <button class="btn" type="submit">Buy Now</button>
-                                    </form>
-                                </div>
-                                <div class="card__actions"> 
-                                    <a href="/products/<%= product._id %> " class="btn"> Details </a>
-                                    <% if(isAuthenticated) {%>
-                                    <%- include('../includes/add-to-cart.ejs', {product: product}) %> 
-                                    <% } %>  
-                                </div>
-                            </article>
-                            <% } %>
-                    </div>
-                    <% } else {%>
-                        <h1>No Products Found!</h1>
-                        <%} %>
-            </main>
-            <%- include('../includes/footer.ejs') %>
+            <div class="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                <% for (let product of prods) { %>
+                    <article class="card product-item bg-white rounded-lg shadow-md hover:shadow-xl transition-transform">
+                        <header class="card__header p-4">
+                            <h1 class="product__title text-xl font-semibold text-green-700">
+                                <%= product.title %>
+                            </h1>
+                        </header>
+                        <div class="card__image overflow-hidden">
+                            <img src="<%= product.imageUrl %>" alt="<%= product.title %>" class="w-full h-64 object-cover rounded-t-lg hover:scale-105 transition-transform duration-300">
+                        </div>
+                        <div class="card__content p-4">
+                            <h2 class="product__price text-lg text-yellow-700 font-semibold">$<%= product.price %></h2>
+                            <p class="product__description text-gray-700">
+                                <%= product.description %>
+                            </p>
+                        </div>
+                        <div class="centered p-4">
+                            <form action="/create-order" method="post">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button class="btn bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-4 py-2 rounded shadow-md transition-transform duration-300 hover:scale-105" type="submit">Buy Now</button>
+                            </form>
+                        </div>
+                        <div class="card__actions p-4 flex justify-between"> 
+                            <a href="/products/<%= product._id %>" class="btn text-green-800 hover:underline">Details</a>
+                            <% if(isAuthenticated) { %>
+                                <%- include('../includes/add-to-cart.ejs', {product: product}) %> 
+                            <% } %>  
+                        </div>
+                    </article>
+                <% } %>
+            </div>
+        <% } else { %>
+            <h1 class="text-center text-red-600 text-2xl font-bold">No Products Found!</h1>
+        <% } %>
+    </main>
+
+    <%- include('../includes/footer.ejs') %>
