@@ -59,6 +59,24 @@
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
+.validation-errors {
+    background-color: #ffe0e0;
+    border: 1px solid red;
+    color: #a00;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+  }
+  .validation-errors ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+
+/* .invalid{
+    border-color: red;;
+} */
+
 /* Responsive Design */
 @media (max-width: 500px) {
     .product-form {

@@ -17,6 +17,7 @@ import crypto from "crypto";
 import nodeMailer from "nodemailer";
 import User from "../models/user.js";
 import { validationResult } from "express-validator";
+import path from "path";
 
 const transporter = nodeMailer.createTransport({
   service: "gmail",
@@ -45,6 +46,23 @@ export const getLogin = (req, res, next) => {
       ? "User is logged in from getLogin"
       : "User is not logged in from getLogin"
   );
+  const oldInput = req.flash("oldInput")[0] || {
+    email: "",
+    password: "",
+    confirmPassword: "",
+  };
+
+  let validationErrors = req.flash("validationErrors");
+  if (validationErrors.length > 0) {
+    try {
+      validationErrors = JSON.parse(validationErrors[0]);
+    } catch (e) {
+      validationErrors = [];
+    }
+  } else {
+    validationErrors = [];
+  }
+
   let message = req.flash("error");
   // console.log("Retrieved Flash Message:", message); // Debugging
 
@@ -58,6 +76,8 @@ export const getLogin = (req, res, next) => {
     path: "/login",
     pageTitle: "Login Page",
     errorMessage: message,
+    oldInput: oldInput,
+    validationErrors: validationErrors,
   });
 };
 
@@ -67,22 +87,35 @@ export const postLogin = async (req, res, next) => {
     const user = await User.findOne({ email: email });
     const errors = validationResult(req); // Check for validation errors
 
-    if(!errors.isEmpty()){
-      return res.render("auth/login", {
+    if (!errors.isEmpty()) {
+      return res.status(422).render("auth/login", {
         path: "/login",
         pageTitle: "Login Page",
         errorMessage: errors.array()[0].msg,
+        oldInput: {
+          email: email,
+          passsword: password,
+        },
+        validationErrors: errors.array(),
       });
     }
-    
+
     if (!user) {
       // console.log("Invalid email or password.");
-      req.flash("error", "User did not found, Please sign up.");
-      return res.redirect("/login");
+      req.flash("error", "User with this email is not found. Please SIGNUP.");
+      return res.status(422).render("auth/login", {
+        path: "/login",
+        pageTitle: "signup Page",
+        errorMessage: errors.array()[0].msg,
+        oldInput: {
+          email: email,
+          passsword: password,
+        },
+        validationErrors: [{ param: "email", param: "password" }],
+      });
     }
     const passwordMatched = await bcrypt.compare(password, user.password);
     if (passwordMatched) {
-      req.flash("error", "Incorrect password. Please try again.");
       req.session.isLoggedIn = true;
       req.session.user = user; //mongoose method
       return req.session.save((err) => {
@@ -92,11 +125,25 @@ export const postLogin = async (req, res, next) => {
       });
     } else {
       req.flash("error", "Incorrect password. Please try again.");
-      res.redirect("/login");
+       console.log("Invalid email or password.");
+        return res.status(422).render("auth/login", {
+        path: "/login",
+        pageTitle: "Login Page",
+        errorMessage: errors.array()[0].msg,
+        oldInput: {
+          email: email,
+          passsword: password,
+        },
+        validationErrors: [{ param: "email", param: "password" }],
+      });
     }
   } catch (err) {
     console.log(err, "error fetching user");
-    req.flash("error", "Something went wrong, please try again.");
+    // req.flash("error", "Something went wrong, please try again.");
+    // console.log("Validation errors:", errors.array()); // Log all validation errors
+    // req.flash("error", errors.array()[0].msg); // Get the first error message
+    // req.flash("oldInput", { email, password, confirmPassword });
+    // req.flash("validationErrors", JSON.stringify(errors.array()));
     return res.redirect("/login");
   }
 };
@@ -152,8 +199,8 @@ export const getSignup = (req, res, next) => {
     validationErrors = [];
   }
 
-  console.log("Validation Errors:", validationErrors); // Debugging 
-  console.log("Old Input:", oldInput); // Debugging 
+  // console.log("Validation Errors:", validationErrors); // Debugging
+  // console.log("Old Input:", oldInput); // Debugging
 
   if (message.length > 0) {
     message = message[0];
@@ -161,7 +208,7 @@ export const getSignup = (req, res, next) => {
     message = null;
   }
 
-  res.render("auth/signup", {
+  res.status(422).render("auth/signup", {
     path: "/signup",
     pageTitle: "Signup Page",
     errorMessage: message,
@@ -179,7 +226,7 @@ export const postSignup = async (req, res, next) => {
       req.flash("error", errors.array()[0].msg); // Get the first error message
       req.flash("oldInput", { email, password, confirmPassword });
       req.flash("validationErrors", JSON.stringify(errors.array()));
-      return res.status(422).redirect("/signup"); // Redirect to signup page with error message
+      return res.redirect("/signup");
     }
 
     if (!password) {

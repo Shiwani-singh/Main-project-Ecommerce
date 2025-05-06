@@ -21,13 +21,15 @@ router.get("/login", getLogin);
 router.post(
   "/login",
   [
-    body("email").isEmail().withMessage("Please enter a valid email"),
+    body("email").isEmail().withMessage("Please enter a valid email")
+    .normalizeEmail(),
     body(
       "password",
       "Please enter a password with only numbers and text and at least 5 characters and only use alphabets and numbers"
     )
       .isLength({ min: 5 })
-      .isAlphanumeric(),
+      .isAlphanumeric()
+      .trim()
   ],
   postLogin
 );
@@ -53,13 +55,15 @@ router.post(
         //   throw new Error("this email is forbidden");
         // }
         // return true;
-      }),
+      })
+      .normalizeEmail(),
     body(
       "password",
       "Please enter a password with only numbers and text and at least 5 characters and only use alphabets and numbers"
     )
       .isLength({ min: 5 })
       .isAlphanumeric()
+      .trim()
       .custom((value) => {
         if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
           throw new Error(
@@ -68,7 +72,7 @@ router.post(
         }
         return true;
       }),
-    body("confirmPassword").custom((value, { req }) => {
+    body("confirmPassword").trim().custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error("Passwords does not match! try again");
       }

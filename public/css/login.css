@@ -25,6 +25,9 @@
   border-color: aqua;
   background: rgb(237, 147, 147);
 }
+input.invalid {
+  border-color: #ba4e4e !important;
+}
 
 @media (min-width: 768px) {
   .main-header-nav{

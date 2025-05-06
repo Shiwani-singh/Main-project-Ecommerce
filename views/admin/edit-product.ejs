@@ -13,25 +13,38 @@
                 <%} else { %>
                     add-product
                 <% } %> " method="POST"> -->
+                <% if (validationErrors && validationErrors.length > 0) { %>
+                    <div class="validation-errors">
+                      <ul>
+                        <% validationErrors.forEach(error => { %>
+                          <li><%= error.msg %></li>
+                        <% }); %>
+                      </ul>
+                    </div>
+                  <% } %>
+                  
+
                 <form class="product-form" action="/admin/<%= editing ? 'edit-product/' + product._id : 'add-product' %>" method="POST">
                     <div class="form-control">
                         <label for="title">Title</label>
-                        <input type="text" name="title" id="title" value="<% if (editing) { %> <%= product.title %> <% } %>">
+                        <input type="text" name="title" id="title" value="<% if (editing) { %> <%= product.title %> <% } else { %> <%= oldInput.title %> <% } %>">
+
                     </div>
 
                     <div class="form-control">
                         <label for="imageUrl">Image URL</label>
-                        <input type="url" name="imageUrl" id="imageUrl" value="<% if (editing) { %> <%= product.imageUrl %> <% } %>">
+                        <input type="url" name="imageUrl" id="imageUrl" value="<% if (editing) { %> <%= product.imageUrl %> <% } else { %> <%= oldInput.imageUrl %> <% } %>">
+
                     </div>
 
                     <div class="form-control">
                         <label for="description">Description</label>
-                        <textarea name="description" id="description" rows="5"> <% if (editing) { %> <%= product.description %> <% } %></textarea>
+                        <textarea name="description" id="description" rows="5"><% if (editing) { %> <%= product.description %> <% } else { %> <%= oldInput.description %> <% } %></textarea>
                     </div>
 
                     <div class="form-control">
                         <label for="price">price</label>
-                        <input type="number" name="price" id="price" step="0.01" value="<% if (editing) { %> <%= product.price %> <% } %>">
+                        <input type="number" name="price" id="price" step="0.01" value="<% if (editing) { %> <%= product.price %> <% } else { %> <%= oldInput.price %> <% } %>">
                     </div>
 
                     <% if(editing) {%>
