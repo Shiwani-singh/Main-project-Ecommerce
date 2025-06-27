@@ -2,7 +2,6 @@
 
 /* 1. Reset & Global Styles */
 
- 
 * {
   box-sizing: border-box;
   margin: 0;
@@ -137,6 +136,26 @@ main p {
   text-decoration: none;
   font-size: 0.9rem;
   display: inline-block;
+}
+
+.pagination {
+  text-align: center;
+}
+
+.pagination a {
+  margin: 0 5px;
+  padding: 8px 12px;
+  background: #3498db;
+  color: #0c6812;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+.pagination a:hover,
+.pagination a:active,
+.pagination a.active {
+  color: #fff;
+  background: #076432;
 }
 
 .btn:hover {

@@ -125,8 +125,8 @@ export const postLogin = async (req, res, next) => {
       });
     } else {
       req.flash("error", "Incorrect password. Please try again.");
-       console.log("Invalid email or password.");
-        return res.status(422).render("auth/login", {
+      console.log("Invalid email or password.");
+      return res.status(422).render("auth/login", {
         path: "/login",
         pageTitle: "Login Page",
         errorMessage: errors.array()[0].msg,
@@ -145,6 +145,9 @@ export const postLogin = async (req, res, next) => {
     // req.flash("oldInput", { email, password, confirmPassword });
     // req.flash("validationErrors", JSON.stringify(errors.array()));
     return res.redirect("/login");
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -180,41 +183,47 @@ export const postLogout = (req, res, next) => {
 };
 
 export const getSignup = (req, res, next) => {
-  let message = req.flash("error");
-  // console.log("Retrieved Flash Message:", message); // Debugging
-  const oldInput = req.flash("oldInput")[0] || {
-    email: "",
-    password: "",
-    confirmPassword: "",
-  };
+  try {
+    let message = req.flash("error");
+    // console.log("Retrieved Flash Message:", message); // Debugging
+    const oldInput = req.flash("oldInput")[0] || {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
 
-  let validationErrors = req.flash("validationErrors");
-  if (validationErrors.length > 0) {
-    try {
-      validationErrors = JSON.parse(validationErrors[0]);
-    } catch (e) {
+    let validationErrors = req.flash("validationErrors");
+    if (validationErrors.length > 0) {
+      try {
+        validationErrors = JSON.parse(validationErrors[0]);
+      } catch (e) {
+        validationErrors = [];
+      }
+    } else {
       validationErrors = [];
     }
-  } else {
-    validationErrors = [];
+
+    // console.log("Validation Errors:", validationErrors); // Debugging
+    // console.log("Old Input:", oldInput); // Debugging
+
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
+
+    res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup Page",
+      errorMessage: message,
+      oldInput: oldInput,
+      validationErrors: validationErrors,
+    });
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
-
-  // console.log("Validation Errors:", validationErrors); // Debugging
-  // console.log("Old Input:", oldInput); // Debugging
-
-  if (message.length > 0) {
-    message = message[0];
-  } else {
-    message = null;
-  }
-
-  res.status(422).render("auth/signup", {
-    path: "/signup",
-    pageTitle: "Signup Page",
-    errorMessage: message,
-    oldInput: oldInput,
-    validationErrors: validationErrors,
-  });
 };
 
 export const postSignup = async (req, res, next) => {
@@ -274,26 +283,32 @@ export const postSignup = async (req, res, next) => {
     res.redirect("/login"); // Redirect to login after successful signup
   } catch (err) {
     console.error("Error during signup:", err);
-    req.flash("error", "Something went wrong. Please try again.");
-    res.redirect("/signup");
-    next(err); // Pass error to Express error handler
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
 export const getResetPassword = (req, res, next) => {
-  let message = req.flash("error");
-  // console.log("Retrieved Flash Message:", message); // Debugging
+  try {
+    let message = req.flash("error");
+    // console.log("Retrieved Flash Message:", message); // Debugging
 
-  if (message.length > 0) {
-    message = message[0];
-  } else {
-    message = null;
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
+    res.render("auth/resetPassword", {
+      path: "/resetPassword",
+      pageTitle: "resetPassword Page",
+      errorMessage: message,
+    });
+  } catch (err) {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
-  res.render("auth/resetPassword", {
-    path: "/resetPassword",
-    pageTitle: "resetPassword Page",
-    errorMessage: message,
-  });
 };
 
 export const postResetPassword = async (req, res, next) => {
@@ -331,8 +346,9 @@ export const postResetPassword = async (req, res, next) => {
     res.redirect("/login");
   } catch (err) {
     console.log(err);
-    req.flash("error", "Error processing password reset request.");
-    res.redirect("/resetPassword");
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -356,6 +372,9 @@ export const getNewPassword = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 
@@ -381,6 +400,9 @@ export const postNewPassword = async (req, res, next) => {
     res.redirect("/login");
   } catch (err) {
     console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 };
 

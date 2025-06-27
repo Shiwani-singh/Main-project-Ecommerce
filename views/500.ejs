@@ -7,7 +7,7 @@
     }
 
     .full-height {
-        min-height: calc(100vh - 100px); /* adjust based on header/footer */
+        min-height: calc(100vh - 100px); /* adjust if header/footer take more/less space */
         display: flex;
         justify-content: center;
         align-items: center;
@@ -29,7 +29,7 @@
     }
 
     .error-icon {
-        max-width: 150px;
+        max-width: 120px;
         margin-bottom: 20px;
         animation: float 2.5s ease-in-out infinite;
     }
@@ -60,11 +60,11 @@
     <%- include('includes/navigation.ejs') %>
 
     <main class="full-height">
-        <img src="https://cdn-icons-png.flaticon.com/512/2748/2748558.png" alt="Not Found Icon" class="error-icon">
-        <h1 class="display-4 text-warning fw-bold">Page Not Found!</h1>
-        <p class="lead text-secondary">Sorry, the page you're looking for doesn't exist.</p>
-        <p class="text-muted">You might have typed the wrong URL or the page has been moved.</p>
-        <a href="/" class="btn btn-outline-warning btn-lg mt-4">Go Back to Home</a>
+        <img src="https://cdn-icons-png.flaticon.com/512/2748/2748558.png" alt="Error Icon" class="error-icon">
+        <h1 class="display-4 text-danger fw-bold">Oops! Error 505</h1>
+        <p class="lead text-secondary">Something went wrong on our end.</p>
+        <p class="text-muted">We’re working to fix it. Please try again later.</p>
+        <a href="/" class="btn btn-outline-primary btn-lg mt-4">Go Back to Home</a>
     </main>
 
     <%- include('includes/footer.ejs') %>

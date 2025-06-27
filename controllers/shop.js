@@ -5,10 +5,12 @@ import Product from "../models/product.js";
 import Order from "../models/order.js";
 // import { Cart } from "../models/cart.js";
 
-export const getTest = ((req, res) => {
+const Items_PerPage = 2; // Number of items to display per page (pagination)
+
+export const getTest = (req, res) => {
   console.log("Session in getTest:", req.session);
-  res.json(req.session);  // Return session data as JSON
-});
+  res.json(req.session); // Return session data as JSON
+};
 
 export const getProducts = (req, res, next) => {
   // Product.fetchAll() mongo method
@@ -23,6 +25,9 @@ export const getProducts = (req, res, next) => {
     })
     .catch((err) => {
       console.log("Error in fetching data", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 // get a single product
@@ -31,7 +36,6 @@ export const getProductById = (req, res, next) => {
   Product.findById(productId) // findById is a mongoose method
     // Product.fetchById(productId) // ({ where: { id: productId } }) it is for sequelize
     .then((product) => {
-     
       // console.log(product);
       res.render("shop/product-details", {
         product: product, //product on the right side of colon is the product we are retrieving & left side is the key by which  we will be able to access it in view.
@@ -41,6 +45,9 @@ export const getProductById = (req, res, next) => {
     })
     .catch((err) => {
       console.log("Error fetching the product by Id", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 
   // Product.findByPk(productId) //we can do this where query also like above
@@ -56,16 +63,33 @@ export const getProductById = (req, res, next) => {
 };
 
 export const getIndex = (req, res, next) => {
-  Product.find()
+  const page = +req.query.page || 1; // Get the current page from query params, default to 1 if not provided
+  let totalItems;
+  
+  Product.find().countDocuments().then(numProducts => {
+    totalItems = numProducts; // Get the total number of products
+    return Product.find().skip((page - 1) * Items_PerPage) // Skip the items based on the current page
+    .limit(Items_PerPage) // Limit the number of items per page
+  })
+    
     .then((product) => {
       res.render("shop/index", {
         prods: product,
         pageTitle: "Shop",
-        path: "/"
+        path: "/",
+        currentPage: page, // Current page number
+        hasNextPage: Items_PerPage * page < totalItems, // Check if there is a next page
+        hasPreviousPage: page > 1, // Check if there is a previous page
+        nextPage: page + 1, // Next page number
+        previousPage: page - 1, // Previous page number
+        lastPage: Math.ceil(totalItems / Items_PerPage), // Calculate the last page number
       });
     })
     .catch((err) => {
       console.log("Error in fetching data", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -102,10 +126,14 @@ export const getCart = (req, res, next) => {
         path: "/cart",
         pageTitle: "Your Cart",
         products: products,
-        
       });
     })
-    .catch((err) => console.log("error getting the cart", err));
+    .catch((err) => {
+      console.log("error getting the cart", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 /*sequelize method
   req.user
@@ -158,7 +186,12 @@ export const postCart = (req, res, next) => {
         res.redirect("/cart");
       });
     })
-    .catch((err) => console.log("error fetching product in cart", err));
+    .catch((err) => {
+      console.log("error fetching product in cart", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 /*sequelize method
@@ -207,21 +240,29 @@ export const postCartDeleteItem = (req, res, next) => {
     .then((result) => {
       res.redirect("/cart");
     })
-    .catch((err) => console.log("error deleting cart item", err));
+    .catch((err) => {
+      console.log("error deleting cart item", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 export const getOrders = (req, res, next) => {
-  Order.find({ "user.userId" : req.user._id}) //it gives all orders that belongs to that user
-  .then((orders) => {
-    res.render("shop/orders", {
-      path: "/orders",
-      pageTitle: "Your Orders",
-      orders: orders,
-    }); //stores all retrived orders
-  })
-  .catch((err) => {
-    console.log("error fetching orders", err);
-  });
+  Order.find({ "user.userId": req.user._id }) //it gives all orders that belongs to that user
+    .then((orders) => {
+      res.render("shop/orders", {
+        path: "/orders",
+        pageTitle: "Your Orders",
+        orders: orders,
+      }); //stores all retrived orders
+    })
+    .catch((err) => {
+      console.log("error fetching orders", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
   // req.user //mongodb method
   //   .populate('order.items.productId')
   //   .then((orders) => {
@@ -252,8 +293,8 @@ export const getOrders = (req, res, next) => {
 };*/
 
 export const postOrder = (req, res, next) => {
-  console.log("Received CSRF Token:", req.body._csrf);  // ✅ Check if token is received
-  console.log("Session ID:", req.sessionID);  // ✅ Check if session exists
+  console.log("Received CSRF Token:", req.body._csrf); // ✅ Check if token is received
+  console.log("Session ID:", req.sessionID); // ✅ Check if session exists
 
   req.user
     .populate("cart.items.productId")
@@ -271,12 +312,19 @@ export const postOrder = (req, res, next) => {
       });
       return order.save();
     })
-    .then((result) => {  //clear the cart after order is placed
+    .then((result) => {
+      //clear the cart after order is placed
       return req.user.clearCart();
-    }).then(() => {
+    })
+    .then(() => {
       res.redirect("/orders");
     })
-    .catch((err) => console.log("error in post order func:", err));
+    .catch((err) => {
+      console.log("error in post order func:", err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 
   // req.user mongodb method
   //   .addOrder()

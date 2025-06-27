@@ -1,5 +1,6 @@
 // const http = require('http');   no need of this, coz using express
 import express from "express";
+
 import ejs from "ejs";
 // import bodyParser from 'body-parser'; //no need of this, coz  since Express v4.16.0+, the built-in express.urlencoded() does the same thing
 import path from "path";
@@ -7,12 +8,13 @@ import { fileURLToPath } from "url";
 import adminRoutes from "./routes/admin.js";
 import shopRoutes from "./routes/shop.js";
 import authRoutes from "./routes/auth.js";
-import { errorFunction } from "./controllers/error.js";
+import { errorFunction, errorFunction500 } from "./controllers/error.js";
 import User from "./models/user.js";
 import session from "express-session";
 import connectMongoDBSession from "connect-mongodb-session";
 import csrf from "csurf";
 import flash from "connect-flash";
+import multer from "multer";
 // import sequelize from "./util/database.js";
 // import { Product } from "./models/product.js";
 // import {User} from "./models/user.js";
@@ -23,6 +25,7 @@ import flash from "connect-flash";
 // import { constants } from "buffer";
 // import {mongoConnection , getDb}from "./util/database.js";
 import mongoose from "mongoose";
+import { error } from "console";
 
 const MongoDBStore = connectMongoDBSession(session); // ✅ Call it with session
 
@@ -37,14 +40,50 @@ const store = new MongoDBStore({
   collection: "sessions",
 }); //store the session in mongodb
 
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images"); //this is the folder where the images will be saved
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  }, // this is the name of the file that will be saved in the images folder
+});
+
+
+
+const multerFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    console.log("❌ Rejected file type:", file.mimetype); // Logs PDF uploads, etc.
+    cb(new Error("Only image files are allowed (png, jpg, jpeg)"), false);
+
+    // cb(null, false); //this is used to filter the files that are uploaded
+  }
+};
+
+// app.use(
+//   multer({ storage: multerStorage, fileFilter: multerFilter }).single("image")
+// ); //this is used to upload files, like images
+
+app.use(multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+}).single("image"))// Exporting the multer instance to use in other files
+
 const csrfProtection = csrf();
+
+
 
 app.set("view engine", "ejs");
 app.set("views", "views");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 app.use(
   session({
@@ -55,11 +94,20 @@ app.use(
   })
 ); //session middleware
 app.use(express.urlencoded({ extended: false }));
+
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(csrfProtection);
 
-
 app.use(flash());
+
+app.use((req, res, next) => {
+  console.log( 'request body',req.body)
+  res.locals.isAuthenticated = req.session.isLoggedIn || false;
+  res.locals.csrfToken = req.csrfToken();
+  // console.log("CSRF Token:", req.csrfToken());
+  next();
+});
 
 // to use the user in the app anywhere
 // want to make sure that every time a request comes in (e.g., someone visiting your online shop), you can access the user easily.
@@ -86,27 +134,27 @@ app.use(async (req, res, next) => {
   }
   try {
     const user = await User.findById(req.session.user._id);
-    if (user) {
-      req.user = user;
+    if (!user) {
+      // If no user found (maybe deleted), move to next without setting req.user
+      return next();
     }
+    req.user = user; // Attach found user to request object
     next();
   } catch (err) {
     console.log("Error fetching user", err);
-    next();
+    // res.redirect("/500");
+    next(err);
   }
-});
-
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn || false;
-  res.locals.csrfToken = req.csrfToken();
-  console.log("CSRF Token:", req.csrfToken());
-  next();
 });
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
+
+// app.get("/500", errorFunction500); //error page
 app.use(errorFunction);
+
+app.use(errorFunction500);
 
 mongoose
   .connect(MONGODB_URI)

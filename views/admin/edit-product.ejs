@@ -13,46 +13,61 @@
                 <%} else { %>
                     add-product
                 <% } %> " method="POST"> -->
-                <% if (validationErrors && validationErrors.length > 0) { %>
+                <% if (validationErrors && validationErrors.length> 0) { %>
                     <div class="validation-errors">
-                      <ul>
-                        <% validationErrors.forEach(error => { %>
-                          <li><%= error.msg %></li>
-                        <% }); %>
-                      </ul>
+                        <ul>
+                            <% validationErrors.forEach(error=> { %>
+                                <li>
+                                    <%= error.msg %>
+                                </li>
+                                <% }); %>
+                        </ul>
                     </div>
-                  <% } %>
-                  
-
-                <form class="product-form" action="/admin/<%= editing ? 'edit-product/' + product._id : 'add-product' %>" method="POST">
-                    <div class="form-control">
-                        <label for="title">Title</label>
-                        <input type="text" name="title" id="title" value="<% if (editing) { %> <%= product.title %> <% } else { %> <%= oldInput.title %> <% } %>">
-
-                    </div>
-
-                    <div class="form-control">
-                        <label for="imageUrl">Image URL</label>
-                        <input type="url" name="imageUrl" id="imageUrl" value="<% if (editing) { %> <%= product.imageUrl %> <% } else { %> <%= oldInput.imageUrl %> <% } %>">
-
-                    </div>
-
-                    <div class="form-control">
-                        <label for="description">Description</label>
-                        <textarea name="description" id="description" rows="5"><% if (editing) { %> <%= product.description %> <% } else { %> <%= oldInput.description %> <% } %></textarea>
-                    </div>
-
-                    <div class="form-control">
-                        <label for="price">price</label>
-                        <input type="number" name="price" id="price" step="0.01" value="<% if (editing) { %> <%= product.price %> <% } else { %> <%= oldInput.price %> <% } %>">
-                    </div>
-
-                    <% if(editing) {%>
-                        <input type="hidden" name="productId" value="<%= product._id %>">
-
                     <% } %>
-                    <input type="hidden" name= "_csrf"  value="<%= csrfToken %>">
-                    <button class="btn" type="submit"><% if (editing) { %>Update Product<% } else { %>Add Product<% } %></button>
-                </form>
+
+
+                        <form class="product-form"
+                            action="/admin/<%= editing ? 'edit-product/' + product._id : 'add-product' %>"
+                            method="POST" enctype="multipart/form-data" >
+                            <div class="form-control">
+                                <label for="title">Title</label>
+                                <input type="text" name="title" id="title"
+                                    value="<% if (editing) { %> <%= product.title %> <% } else { %> <%= oldInput.title %> <% } %>">
+
+                            </div>
+
+                            <!--<div class="form-control">
+                                <label for="imageUrl">Image URL</label>
+                                <input type="url" name="imageUrl" id="imageUrl"
+                                    value="<% if (editing) { %> <%= product.imageUrl %> <% } else { %> <%= oldInput.imageUrl %> <% } %>">
+
+                            </div> -->
+
+                            <div class="form-control">
+                                <label for="image">Image</label>
+                                <input type="file" name="image" id="image" >
+                            </div> 
+
+                            <div class="form-control">
+                                <label for="description">Description</label>
+                                <textarea name="description" id="description"
+                                    rows="5"><% if (editing) { %> <%= product.description %> <% } else { %> <%= oldInput.description %> <% } %></textarea>
+                            </div>
+
+                            <div class="form-control">
+                                <label for="price">price</label>
+                                <input type="number" name="price" id="price" step="0.01"
+                                    value="<% if (editing) { %> <%= product.price %> <% } else { %> <%= oldInput.price %> <% } %>">
+                            </div>
+
+                            <% if(editing) {%>
+                                <input type="hidden" name="productId" value="<%= product._id %>">
+
+                                <% } %>
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button class="btn" type="submit">
+                                        <% if (editing) { %>Update Product<% } else { %>Add Product<% } %>
+                                    </button>
+                        </form>
             </main>
             <%- include('../includes/footer.ejs') %>

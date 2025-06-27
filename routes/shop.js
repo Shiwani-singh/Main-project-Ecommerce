@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from "fs";
 
 import {isAuth} from '../middleware/isAuth.js';
 import { getIndex, getProducts, getProductById, postCart, getCart, postCartDeleteItem, getOrders, postOrder, getTest} from '../controllers/shop.js';
@@ -28,8 +29,21 @@ router.post('/cart-delete-item', isAuth, postCartDeleteItem);
 
 router.get('/orders', isAuth, getOrders)
 
-router.post('/create-order', isAuth, postOrder)
+router.post('/create-order', isAuth, postOrder) 
 
+router.get("/private-image/:filename", isAuth, (req, res) => {
+  console.log("imagepath", req.params.filename);
+  const { filename } = req.params;
+  const imagePath = path.join(process.cwd(), "images", filename);
+
+  // Check if file exists
+  if (!fs.existsSync(imagePath)) {
+    return res.status(404).json({ error: "Image not found" });
+  }
+
+  // Optionally add auth check here before sending the file
+  res.sendFile(imagePath);
+});
 
 
 
